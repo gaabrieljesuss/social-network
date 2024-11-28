@@ -1,0 +1,26 @@
+version: "3"
+services:
+  api:
+    container_name: social_network_api
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile.api
+    env_file: .env
+    environment:
+      - DATABASE_HOST=database
+    depends_on:
+      - database
+    ports:
+      - "8000:8000"
+  database:
+    container_name: social_network_database
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile.postgres
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:

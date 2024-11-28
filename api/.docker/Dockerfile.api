@@ -1,0 +1,31 @@
+FROM golang:1.22-bullseye
+
+WORKDIR /api
+
+# Setup default ENV
+ENV GOPATH /go
+ENV PATH $PATH:$GOPATH/bin
+ENV DATABASE_SSL_MODE=disable
+
+# Install dependencies
+ADD https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /opt/bin/
+RUN chmod +x /opt/bin/wait-for-it.sh
+RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+# Copy application files
+COPY src src
+COPY go.mod go.mod
+COPY main.go main.go
+COPY start.sh start.sh
+COPY .env .env
+RUN mkdir tools
+
+# Install dependencies and Build application
+RUN go mod tidy
+RUN go build -o ./main ./main.go
+RUN chmod +x ./start.sh
+
+# Copy application database migrations
+COPY config/database ./config/database
+
+CMD /opt/bin/wait-for-it.sh --timeout=20 $DATABASE_HOST:$DATABASE_PORT -- ./start.sh
