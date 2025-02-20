@@ -5,15 +5,26 @@ import (
 	"database/sql"
 )
 
-type Publicacoes struct {
+type PublicacoesRepositorio interface {
+	Criar(publicacao modelos.Publicacao) (uint64, error)
+	BuscarPorId(publicacaoID uint64) (modelos.Publicacao, error)
+	BuscarPublicacoes(usuarioID uint64) ([]modelos.Publicacao, error)
+	Atualizar(publicacaoID uint64, publicacao modelos.Publicacao) error
+	DeletarPublicacao(publicacaoID uint64) error
+	BuscarPorUsuario(usuarioID uint64) ([]modelos.Publicacao, error)
+	Curtir(publicacaoID uint64) error
+	Descurtir(publicacaoID uint64) error
+}
+
+type publicacoesRepositorio struct {
 	db *sql.DB
 }
 
-func NovoRepositorioDePublicacoes(db *sql.DB) *Publicacoes {
-	return &Publicacoes{db}
+func NovoRepositorioDePublicacoes(db *sql.DB) PublicacoesRepositorio {
+	return &publicacoesRepositorio{db}
 }
 
-func (repositorio Publicacoes) Criar(publicacao modelos.Publicacao) (uint64, error) {
+func (repositorio *publicacoesRepositorio) Criar(publicacao modelos.Publicacao) (uint64, error) {
 	query := "INSERT INTO publicacoes (titulo, conteudo, autor_id) VALUES ($1, $2, $3) RETURNING id"
 	var ultimoIDInserido uint64
 
@@ -25,7 +36,7 @@ func (repositorio Publicacoes) Criar(publicacao modelos.Publicacao) (uint64, err
 	return ultimoIDInserido, nil
 }
 
-func (repositorio Publicacoes) BuscarPorId(publicacaoID uint64) (modelos.Publicacao, error) {
+func (repositorio *publicacoesRepositorio) BuscarPorId(publicacaoID uint64) (modelos.Publicacao, error) {
 	linhas, erro := repositorio.db.Query(`
 		SELECT p.*, u.nick FROM 
 		publicacoes p INNER JOIN usuarios u 
@@ -56,7 +67,7 @@ func (repositorio Publicacoes) BuscarPorId(publicacaoID uint64) (modelos.Publica
 	return publicacao, nil
 }
 
-func (repositorio Publicacoes) BuscarPublicacoes(usuarioID uint64) ([]modelos.Publicacao, error) {
+func (repositorio *publicacoesRepositorio) BuscarPublicacoes(usuarioID uint64) ([]modelos.Publicacao, error) {
 	linhas, erro := repositorio.db.Query(`
 	SELECT DISTINCT p.*, u.nick FROM publicacoes p 
 	INNER JOIN usuarios u ON u.id = p.autor_id 
@@ -91,7 +102,7 @@ func (repositorio Publicacoes) BuscarPublicacoes(usuarioID uint64) ([]modelos.Pu
 	return publicacoes, nil
 }
 
-func (repositorio Publicacoes) Atualizar(publicacaoID uint64, publicacao modelos.Publicacao) error {
+func (repositorio *publicacoesRepositorio) Atualizar(publicacaoID uint64, publicacao modelos.Publicacao) error {
 	statement, erro := repositorio.db.Prepare("UPDATE publicacoes set titulo = $1, conteudo = $2 WHERE id = $3")
 	if erro != nil {
 		return erro
@@ -105,7 +116,7 @@ func (repositorio Publicacoes) Atualizar(publicacaoID uint64, publicacao modelos
 	return nil
 }
 
-func (repositorio Publicacoes) DeletarPublicacao(publicacaoID uint64) error {
+func (repositorio *publicacoesRepositorio) DeletarPublicacao(publicacaoID uint64) error {
 	statement, erro := repositorio.db.Prepare("DELETE FROM publicacoes WHERE id = $1")
 	if erro != nil {
 		return erro
@@ -119,7 +130,7 @@ func (repositorio Publicacoes) DeletarPublicacao(publicacaoID uint64) error {
 	return nil
 }
 
-func (repositorio Publicacoes) BuscarPorUsuario(usuarioID uint64) ([]modelos.Publicacao, error) {
+func (repositorio *publicacoesRepositorio) BuscarPorUsuario(usuarioID uint64) ([]modelos.Publicacao, error) {
 	linhas, erro := repositorio.db.Query(`
 	SELECT p.*, u.nick FROM publicacoes p 
 	INNER JOIN usuarios u ON u.id = p.autor_id 
@@ -152,7 +163,7 @@ func (repositorio Publicacoes) BuscarPorUsuario(usuarioID uint64) ([]modelos.Pub
 	return publicacoes, nil
 }
 
-func (repositorio Publicacoes) Curtir(publicacaoID uint64) error {
+func (repositorio *publicacoesRepositorio) Curtir(publicacaoID uint64) error {
 	statement, erro := repositorio.db.Prepare("UPDATE publicacoes set curtidas = curtidas + 1 WHERE id = $1")
 	if erro != nil {
 		return erro
@@ -166,7 +177,7 @@ func (repositorio Publicacoes) Curtir(publicacaoID uint64) error {
 	return nil
 }
 
-func (repositorio Publicacoes) Descurtir(publicacaoID uint64) error {
+func (repositorio *publicacoesRepositorio) Descurtir(publicacaoID uint64) error {
 	statement, erro := repositorio.db.Prepare(`
 	UPDATE publicacoes set curtidas = 
 	CASE WHEN curtidas > 0 THEN curtidas - 1 

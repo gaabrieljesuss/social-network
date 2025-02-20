@@ -5,15 +5,19 @@ import (
 	"database/sql"
 )
 
-type Usuarios struct {
+type UsuarioRepositorio interface {
+	BuscarPorEmail(email string) (modelos.Usuario, error)
+}
+
+type usuarioRepositorio struct {
 	db *sql.DB
 }
 
-func NovoRepositorioDeUsuarios(db *sql.DB) *Usuarios {
-	return &Usuarios{db}
+func NovoRepositorioDeUsuarios(db *sql.DB) UsuarioRepositorio {
+	return &usuarioRepositorio{db}
 }
 
-func (repositorio Usuarios) BuscarPorEmail(email string) (modelos.Usuario, error) {
+func (repositorio *usuarioRepositorio) BuscarPorEmail(email string) (modelos.Usuario, error) {
 	linhas, erro := repositorio.db.Query(
 		"SELECT id, senha FROM usuarios WHERE email = $1", email,
 	)

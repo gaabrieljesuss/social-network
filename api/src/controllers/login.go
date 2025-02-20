@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"api/src/autenticacao"
-	"api/src/banco"
 	"api/src/modelos"
 	"api/src/repositorios"
 	"api/src/respostas"
@@ -12,7 +11,15 @@ import (
 	"net/http"
 )
 
-func Login(w http.ResponseWriter, r *http.Request) {
+type UsuarioController struct {
+	Repositorio repositorios.UsuarioRepositorio
+}
+
+func NovoUsuarioController(repositorio repositorios.UsuarioRepositorio) *UsuarioController {
+	return &UsuarioController{Repositorio: repositorio}
+}
+
+func (uc *UsuarioController) Login(w http.ResponseWriter, r *http.Request) {
 	corpoRequest, erro := ioutil.ReadAll(r.Body)
 	if erro != nil {
 		respostas.Erro(w, http.StatusUnprocessableEntity, erro)
@@ -26,15 +33,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, erro := banco.Conectar()
-	if erro != nil {
-		respostas.Erro(w, http.StatusInternalServerError, erro)
-		return
-	}
-	defer db.Close()
-
-	repositorio := repositorios.NovoRepositorioDeUsuarios(db)
-	usuarioSalvoNoBanco, erro := repositorio.BuscarPorEmail(usuario.Email)
+	usuarioSalvoNoBanco, erro := uc.Repositorio.BuscarPorEmail(usuario.Email)
 	if erro != nil {
 		respostas.Erro(w, http.StatusInternalServerError, erro)
 		return

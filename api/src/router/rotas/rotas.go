@@ -1,6 +1,7 @@
 package rotas
 
 import (
+	"api/src/controllers"
 	"api/src/middlewares"
 	"net/http"
 
@@ -10,13 +11,13 @@ import (
 type Rota struct {
 	URI                string
 	Metodo             string
-	Funcao             func(http.ResponseWriter, *http.Request)
+	Funcao             http.HandlerFunc
 	RequerAutenticacao bool
 }
 
-func Configurar(r *mux.Router) *mux.Router {
-	rotas := rotasPublicacoes
-	rotas = append(rotas, rotaLogin)
+func Configurar(r *mux.Router, usuarioController *controllers.UsuarioController, publicacoesController *controllers.PublicacoesController) *mux.Router {
+	rotas := rotasPublicacoes(publicacoesController)
+	rotas = append(rotas, rotaLogin(usuarioController))
 
 	for _, rota := range rotas {
 		if rota.RequerAutenticacao {
