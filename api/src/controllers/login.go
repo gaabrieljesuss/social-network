@@ -35,7 +35,7 @@ func (uc *UsuarioController) Login(w http.ResponseWriter, r *http.Request) {
 
 	usuarioSalvoNoBanco, erro := uc.Repositorio.BuscarPorEmail(usuario.Email)
 	if erro != nil {
-		respostas.Erro(w, http.StatusInternalServerError, erro)
+		respostas.Erro(w, http.StatusNotFound, erro)
 		return
 	}
 

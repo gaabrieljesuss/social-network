@@ -7,6 +7,7 @@ import (
 	"api/src/respostas"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -44,6 +45,7 @@ func (pc *PublicacoesController) CriarPublicacao(w http.ResponseWriter, r *http.
 	publicacao.AutorID = usuarioID
 
 	if erro = publicacao.Preparar(); erro != nil {
+		fmt.Println("Preparar: ", erro)
 		respostas.Erro(w, http.StatusBadRequest, erro)
 		return
 	}
@@ -70,7 +72,7 @@ func (pc *PublicacoesController) BuscarPublicacoes(w http.ResponseWriter, r *htt
 		return
 	}
 
-	respostas.JSON(w, http.StatusCreated, publicacoes)
+	respostas.JSON(w, http.StatusOK, publicacoes)
 }
 
 func (pc *PublicacoesController) BuscarPublicacao(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +85,7 @@ func (pc *PublicacoesController) BuscarPublicacao(w http.ResponseWriter, r *http
 
 	publicacao, erro := pc.Repositorio.BuscarPorId(publicacaoID)
 	if erro != nil {
-		respostas.Erro(w, http.StatusInternalServerError, erro)
+		respostas.Erro(w, http.StatusNotFound, erro)
 		return
 	}
 
@@ -106,7 +108,8 @@ func (pc *PublicacoesController) AtualizarPublicacao(w http.ResponseWriter, r *h
 
 	publicacaoSalvaNoBanco, erro := pc.Repositorio.BuscarPorId(publicacaoID)
 	if erro != nil {
-		respostas.Erro(w, http.StatusInternalServerError, erro)
+		fmt.Println("Buscar por id: ", erro)
+		respostas.Erro(w, http.StatusNotFound, erro)
 		return
 	}
 
@@ -156,7 +159,7 @@ func (pc *PublicacoesController) DeletarPublicacao(w http.ResponseWriter, r *htt
 
 	publicacaoSalvaNoBanco, erro := pc.Repositorio.BuscarPorId(publicacaoID)
 	if erro != nil {
-		respostas.Erro(w, http.StatusInternalServerError, erro)
+		respostas.Erro(w, http.StatusNotFound, erro)
 		return
 	}
 

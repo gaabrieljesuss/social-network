@@ -40,7 +40,7 @@ func (e *errorReader) Close() error {
 	return nil
 }
 
-func criarRequestLogin(t *testing.T, email, senha string) *http.Request {
+func createLoginRequest(t *testing.T, email, senha string) *http.Request {
 	body, _ := json.Marshal(map[string]string{"email": email, "senha": senha})
 	req, err := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
 	assert.NoError(t, err)
@@ -48,7 +48,7 @@ func criarRequestLogin(t *testing.T, email, senha string) *http.Request {
 	return req
 }
 
-func TestLogin_Sucesso(t *testing.T) {
+func TestLogin_WhenUserWithSpecifiedCredentialsExists_ExpectedToken(t *testing.T) {
 	mockRepo := new(MockRepositorio)
 	controller, recorder := setup(t, mockRepo)
 
@@ -60,7 +60,7 @@ func TestLogin_Sucesso(t *testing.T) {
 
 	mockRepo.On("BuscarPorEmail", email).Return(usuarioMock, nil)
 
-	req := criarRequestLogin(t, email, senha)
+	req := createLoginRequest(t, email, senha)
 	controller.Login(recorder, req)
 
 	assert.Equal(t, http.StatusOK, recorder.Code)
@@ -68,22 +68,22 @@ func TestLogin_Sucesso(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestLogin_EmailNaoEncontrado(t *testing.T) {
+func TestLogin_WhenEmailWasNotFound_ExpectedNotFoundError(t *testing.T) {
 	mockRepo := new(MockRepositorio)
 	controller, recorder := setup(t, mockRepo)
 
 	email := "naoexiste@teste.com"
 	mockRepo.On("BuscarPorEmail", email).Return(modelos.Usuario{}, errors.New("usuário não encontrado"))
 
-	req := criarRequestLogin(t, email, "qualquerSenha")
+	req := createLoginRequest(t, email, "qualquerSenha")
 	controller.Login(recorder, req)
 
-	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+	assert.Equal(t, http.StatusNotFound, recorder.Code)
 	assert.Contains(t, recorder.Body.String(), "usuário não encontrado")
 	mockRepo.AssertExpectations(t)
 }
 
-func TestLogin_SenhaIncorreta(t *testing.T) {
+func TestLogin_WhenPasswordIsIncorrect_ExpectedUnauthorizedError(t *testing.T) {
 	mockRepo := new(MockRepositorio)
 	controller, recorder := setup(t, mockRepo)
 
@@ -94,7 +94,7 @@ func TestLogin_SenhaIncorreta(t *testing.T) {
 
 	mockRepo.On("BuscarPorEmail", email).Return(usuarioMock, nil)
 
-	req := criarRequestLogin(t, email, "senhaErrada")
+	req := createLoginRequest(t, email, "senhaErrada")
 	controller.Login(recorder, req)
 
 	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -102,22 +102,7 @@ func TestLogin_SenhaIncorreta(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestLogin_ErroAoBuscarNoBanco(t *testing.T) {
-	mockRepo := new(MockRepositorio)
-	controller, recorder := setup(t, mockRepo)
-
-	email := "usuario@teste.com"
-	mockRepo.On("BuscarPorEmail", email).Return(modelos.Usuario{}, errors.New("erro no banco"))
-
-	req := criarRequestLogin(t, email, "senha")
-	controller.Login(recorder, req)
-
-	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
-	assert.Contains(t, recorder.Body.String(), "erro no banco")
-	mockRepo.AssertExpectations(t)
-}
-
-func TestLogin_ErroAoLerCorpoRequisicao(t *testing.T) {
+func TestLogin_WhenThereIsAnErrorReadingRequestBody_ExpectedUnprocessableEntityError(t *testing.T) {
 	mockRepo := new(MockRepositorio)
 	controller, recorder := setup(t, mockRepo)
 
