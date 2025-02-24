@@ -45,18 +45,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker Images
-        run: docker-compose -f api/docker-compose.yml build
-
-      - name: Tag and Push API Image
+      - name: Build API Docker Image
         run: |
-          docker tag social_network_api bielsanttos/social-network-api:${{ steps.generate_tag.outputs.sha }}
-          docker push bielsanttos/social-network-api:${{ steps.generate_tag.outputs.sha }}
+          docker build -t bielsanttos/social-network-api:${{ steps.generate_tag.outputs.sha }} -f api/.docker/Dockerfile.api api
 
-      - name: Tag and Push Database Image
+      - name: Push API Docker Image to DockerHub
+        run: docker push bielsanttos/social-network-api:${{ steps.generate_tag.outputs.sha }}
+
+      - name: Build Database Docker Image
         run: |
-          docker tag social_network_database bielsanttos/social-network-database:${{ steps.generate_tag.outputs.sha }}
-          docker push bielsanttos/social-network-database:${{ steps.generate_tag.outputs.sha }}
+          docker build -t bielsanttos/social-network-database:${{ steps.generate_tag.outputs.sha }} -f api/.docker/Dockerfile.postgres api
+
+      - name: Push Database Docker Image to DockerHub
+        run: docker push bielsanttos/social-network-database:${{ steps.generate_tag.outputs.sha }}
 
   deploy:
     name: Deploy on Digital Ocean
