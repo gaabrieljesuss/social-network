@@ -23,12 +23,15 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.22
+          working-directory: api
 
       - name: Install dependencies
         run: go mod tidy
+        working-directory: api
 
       - name: Run tests
         run: go test ./...
+        working-directory: api
 
       - name: Generate Tag
         id: generate_tag
@@ -43,7 +46,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker Image
-        run: docker build -t bielsanttos/social-network:${{ steps.generate_tag.outputs.sha }} .
+        run: docker build -t bielsanttos/social-network:${{ steps.generate_tag.outputs.sha }} -f api/Dockerfile api/
 
       - name: Push Docker Image to DockerHub
         run: docker push bielsanttos/social-network:${{ steps.generate_tag.outputs.sha }}
