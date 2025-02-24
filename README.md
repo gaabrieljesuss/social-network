@@ -8,8 +8,7 @@ Este projeto consiste em uma API RESTful simulando uma rede social construida co
 ## Como executar?
 1. Clone o projeto com o (`git clone`) no seu computador e abra um terminal na pasta baixada;
 2. Navegue até a pasta `api`;
-3. Crie um arquivo de variáveis de ambiente `.env`. Para isso, crie uma copia do arquivo `.env.example` no mesmo diretório e altere o seu nome para `.env`.
-4. Execute a aplicação utilizando o Docker. Para isso, execute o seguinte comando:
+3. Execute a aplicação utilizando o Docker. Para isso, execute o seguinte comando:
 ```bash
 docker compose up --build
 ```

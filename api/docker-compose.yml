@@ -2,9 +2,7 @@ version: "3"
 services:
   api:
     container_name: social_network_api
-    build:
-      context: .
-      dockerfile: .docker/Dockerfile.api
+    image: bielsanttos/social-network-api:latest
     env_file: .env
     environment:
       - DATABASE_HOST=database
@@ -14,9 +12,7 @@ services:
       - "8000:8000"
   database:
     container_name: social_network_database
-    build:
-      context: .
-      dockerfile: .docker/Dockerfile.postgres
+    image: bielsanttos/social-network-database:latest
     env_file: .env
     ports:
       - "5432:5432"
