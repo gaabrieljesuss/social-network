@@ -84,6 +84,8 @@ jobs:
           username: ${{ secrets.USER }}
           password: ${{ secrets.PASSWORD }}
           script: |
+            # Move to api folder
+            cd ~/api
             # Extract the tag from the build job
             TAG=${{ needs.build.outputs.docker_tag }}
             # Create .env file
