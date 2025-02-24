@@ -45,11 +45,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker Image
-        run: docker build -t bielsanttos/social-network:${{ steps.generate_tag.outputs.sha }} -f api/Dockerfile api/
+      - name: Build Docker Images
+        run: docker-compose -f api/docker-compose.yml build
 
-      - name: Push Docker Image to DockerHub
-        run: docker push bielsanttos/social-network:${{ steps.generate_tag.outputs.sha }}
+      - name: Tag and Push API Image
+        run: |
+          docker tag social_network_api bielsanttos/social-network-api:${{ steps.generate_tag.outputs.sha }}
+          docker push bielsanttos/social-network-api:${{ steps.generate_tag.outputs.sha }}
+
+      - name: Tag and Push Database Image
+        run: |
+          docker tag social_network_database bielsanttos/social-network-database:${{ steps.generate_tag.outputs.sha }}
+          docker push bielsanttos/social-network-database:${{ steps.generate_tag.outputs.sha }}
 
   deploy:
     name: Deploy on Digital Ocean
@@ -86,7 +93,7 @@ jobs:
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
             # Stop running containers
             docker-compose down
-            # Pull the latest image
+            # Pull latest images
             docker-compose pull
             # Start new containers
             docker-compose up -d --build
