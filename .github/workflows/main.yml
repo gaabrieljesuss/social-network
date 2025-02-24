@@ -23,8 +23,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.22
-          working-directory: api
-
+          cache: true
+      
       - name: Install dependencies
         run: go mod tidy
         working-directory: api
@@ -84,8 +84,6 @@ jobs:
           username: ${{ secrets.USER }}
           password: ${{ secrets.PASSWORD }}
           script: |
-            # Move to api folder
-            cd ~/api
             # Extract the tag from the build job
             TAG=${{ needs.build.outputs.docker_tag }}
             # Create .env file
@@ -94,9 +92,19 @@ jobs:
             echo "DOCKER_IMAGE_TAG=$TAG" > .env
             # Login to DockerHub
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-            # Stop running containers
-            docker-compose down
-            # Pull latest images
-            docker-compose pull
+            #Stop Containers
+            CONTAINERS=$(docker ps -q)
+            if [ -n "$CONTAINERS" ]; then
+              docker stop $CONTAINERS
+            else
+              echo " No running containers"
+            fi
+            #Remove Old Containers
+            CONTAINERS=$(docker ps -a -q)
+            if [ -n "$CONTAINERS" ]; then
+              docker rm $CONTAINERS
+            else
+              echo " No containers to remove"
+            fi
             # Start new containers
             docker-compose up -d --build
