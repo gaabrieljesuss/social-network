@@ -77,13 +77,13 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
         
-      - name: Copy docker-compose and .env files via SSH
+      - name: Copy docker-compose files via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           password: ${{ secrets.PASSWORD }}
-          source: "./api/docker-compose.yml,./api/.env"
+          source: "./api/docker-compose.yml"
           target: "~/"
 
       - name: Deploy on Digital Ocean via SSH
@@ -97,10 +97,8 @@ jobs:
             cd ~/api
             # Extract the tag from the build job
             TAG=${{ needs.build.outputs.docker_tag }}
-            # Create .env file
-            [ -e .env ] && rm .env
-            touch .env
-            echo "DOCKER_IMAGE_TAG=$TAG" > .env
+            # Add DOCKER_IMAGE_TAG to .env file
+            echo "DOCKER_IMAGE_TAG=$TAG" >> .env
             # Login to DockerHub
             docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
             #Stop Containers
