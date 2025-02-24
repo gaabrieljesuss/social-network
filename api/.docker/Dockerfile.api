@@ -15,6 +15,7 @@ RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate
 # Copy application files
 COPY src src
 COPY go.mod go.mod
+COPY go.sum go.sum
 COPY main.go main.go
 COPY start.sh start.sh
 COPY .env .env
