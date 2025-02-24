@@ -77,13 +77,13 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
         
-      - name: Copy docker-compose files via SSH
+      - name: Copy docker-compose and .env files via SSH
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           password: ${{ secrets.PASSWORD }}
-          source: "./api/docker-compose.yml"
+          source: "./api/docker-compose.yml,./api/.env"
           target: "~/"
 
       - name: Deploy on Digital Ocean via SSH
