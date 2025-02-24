@@ -1,0 +1,100 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build, Test and Push
+    runs-on: ubuntu-latest
+    outputs:
+      docker_tag: ${{ steps.generate_tag.outputs.sha }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+          working-directory: api
+
+      - name: Install dependencies
+        run: go mod tidy
+        working-directory: api
+
+      - name: Run tests
+        run: go test ./...
+        working-directory: api
+
+      - name: Generate Tag
+        id: generate_tag
+        run: |
+          SHA=$(echo $GITHUB_SHA | head -c7)
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build API Docker Image
+        run: |
+          docker build -t bielsanttos/social-network-api:${{ steps.generate_tag.outputs.sha }} -f api/.docker/Dockerfile.api api
+
+      - name: Push API Docker Image to DockerHub
+        run: docker push bielsanttos/social-network-api:${{ steps.generate_tag.outputs.sha }}
+
+      - name: Build Database Docker Image
+        run: |
+          docker build -t bielsanttos/social-network-database:${{ steps.generate_tag.outputs.sha }} -f api/.docker/Dockerfile.postgres api
+
+      - name: Push Database Docker Image to DockerHub
+        run: docker push bielsanttos/social-network-database:${{ steps.generate_tag.outputs.sha }}
+
+  deploy:
+    name: Deploy on Digital Ocean
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        
+      - name: Copy docker-compose file via SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASSWORD }}
+          source: "./api/docker-compose.yml"
+          target: "~/"
+
+      - name: Deploy on Digital Ocean via SSH
+        uses: appleboy/ssh-action@v0.1.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASSWORD }}
+          script: |
+            # Extract the tag from the build job
+            TAG=${{ needs.build.outputs.docker_tag }}
+            # Create .env file
+            [ -e .env ] && rm .env
+            touch .env
+            echo "DOCKER_IMAGE_TAG=$TAG" > .env
+            # Login to DockerHub
+            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+            # Stop running containers
+            docker-compose down
+            # Pull latest images
+            docker-compose pull
+            # Start new containers
+            docker-compose up -d --build
