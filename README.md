@@ -63,3 +63,36 @@ Após isto, copie o token retornado e adicione-o no cabeçalho de autenticação
 
 - **`POST /publicacoes/{publicacaoId}/descurtir`**: Remove uma curtida de uma publicação.  
   **Autenticação:** Requerida.  
+
+## Monitoramento da API com Prometheus e Grafana
+
+Este projeto está configurado para permitir o monitoramento de métricas da API utilizando **Prometheus** e **Grafana**.
+
+### **Prometheus**
+O Prometheus coleta métricas sobre a API e está configurado para monitorar o tempo de resposta das requisições e o número total de requisições recebidas.
+
+#### **Métricas Disponíveis:**
+- **`api_requests_total`**: Número total de requisições recebidas pela API, categorizadas por método HTTP e endpoint.
+- **`api_response_time_seconds`**: Tempo de resposta das requisições, categorizado por método HTTP e endpoint.
+
+### **Grafana**
+Grafana é utilizado para visualização das métricas coletadas pelo Prometheus. O painel do Grafana exibe gráficos e informações sobre as requisições da API, incluindo tempos de resposta e contagem de requisições.
+
+#### **Como acessar o Grafana:**
+1. Após subir os containers com o comando `docker compose up --build`, acesse o Grafana no endereço `http://localhost:3000`.
+2. As credenciais padrão para login são:
+  - **Usuário:** `admin`
+  - **Senha:** A senha configurada na variável de ambiente `GF_SECURITY_ADMIN_PASSWORD` no arquivo `.env`.
+
+#### **Painéis de Monitoramento:**
+- O Grafana estará configurado para buscar métricas do Prometheus, e você poderá visualizar gráficos sobre o tempo de resposta das requisições e a quantidade total de requisições feitas para os diferentes endpoints da API.
+
+### **Acessando as Métricas do Prometheus:**
+As métricas expostas pelo Prometheus podem ser acessadas diretamente pelo endereço:
+- **Prometheus:** `http://localhost:9090/metrics`
+
+### **Acessando as Informações no Prometheus:**
+1. Abra o Prometheus em `http://localhost:9090`.
+2. Utilize as queries do Prometheus, como:
+  - **`api_requests_total`** para visualizar o número total de requisições.
+  - **`api_response_time_seconds_sum / api_response_time_seconds_count`** para ver o tempo médio de resposta das requisições.
