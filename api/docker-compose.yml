@@ -5,7 +5,7 @@ services:
     image: bielsanttos/social-network-api:${DOCKER_IMAGE_TAG}
     env_file: .env
     environment:
-      - DATABASE_HOST=database
+      - DATABASE_HOST=${DATABASE_HOST}
     depends_on:
       - database
     ports:
@@ -18,5 +18,20 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  prometheus:
+    image: prom/prometheus:v3.2.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
 volumes:
   postgres_data:
+  grafana-data:

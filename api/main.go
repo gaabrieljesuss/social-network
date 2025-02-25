@@ -4,6 +4,7 @@ import (
 	"api/src/banco"
 	"api/src/config"
 	"api/src/controllers"
+	"api/src/metrics"
 	"api/src/repositorios"
 	"api/src/router"
 	"fmt"
@@ -13,6 +14,8 @@ import (
 
 func main() {
 	config.Carregar()
+
+	metrics.Init()
 
 	db, err := banco.Conectar()
 	if err != nil {
